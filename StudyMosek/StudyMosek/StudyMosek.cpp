@@ -3,14 +3,19 @@
 
 #include "stdafx.h"
 
+/* This function prints log output from MOSEK to the terminal. */
+ static void MSKAPI printstr(void *handle,	 MSKCONST char str[])
+	 {
+	 printf("%s", str);
+	 } /* printstr */
 
 int main()
 {
 	MSKenv_t env = NULL;
 	MSKtask_t task = NULL;
-	MSKrescodee res;
-	res = MSK_makeenv(&env, NULL);
-	catch {res == MSK_RES_OK; }
+	MSKrescodee r;
+	r = MSK_makeenv(&env, NULL);
+	r = MSK_maketask(env, numcon, numvar, &task);
 
 
 	return 0;
