@@ -1,5 +1,8 @@
 This project is to study MOSEK. To solve a QP with MOSEK.
 
+Log: 1 I can't find qo1.cpp in my laptop after I added it manully to my desktop
+
+
 
 ========================================================================
     CONSOLE APPLICATION : StudyMosek Project Overview
