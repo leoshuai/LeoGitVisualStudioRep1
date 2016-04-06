@@ -6,7 +6,13 @@
 
 int main()
 {
+	MSKenv_t env = NULL;
+	MSKtask_t task = NULL;
+	MSKrescodee res;
+	res = MSK_makeenv(&env, NULL);
+	catch {res == MSK_RES_OK; }
 
-    return 0;
+
+	return 0;
 }
 
