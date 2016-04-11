@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <tchar.h>
 #include "mosek.h"
+#include <Eigen/Dense>
 
 
 

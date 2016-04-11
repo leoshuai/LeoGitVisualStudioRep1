@@ -1,31 +1,14 @@
-/*
-Copyright: Copyright (c) MOSEK ApS, Denmark. All rights reserved.
-
-File:      qo1.c
-
-Purpose: To demonstrate how to solve a quadratic optimization
-problem using the MOSEK API.
-*/
-
-//#include <stdio.h>
 #include "stdafx.h"
-//#include "mosek.h" /* Include the MOSEK definition file. */
-
-#define NUMCON 1   /* Number of constraints.             */
-#define NUMVAR 3   /* Number of variables.               */
-#define NUMANZ 3   /* Number of non-zeros in A.           */
-#define NUMQNZ 4   /* Number of non-zeros in Q.           */
-
 static void MSKAPI printstr(void *handle, MSKCONST char str[])
 {
 	printf("%s", str);
 } /* printstr */
 
-int main(int argc, char *argv[])
+int main1(int argc, char *argv[])
 {
 	using namespace Eigen;
 	using namespace std;
-	int n=2;
+	int n = 2;
 	VectorXd xk(n);
 	xk << 2, 3;
 
