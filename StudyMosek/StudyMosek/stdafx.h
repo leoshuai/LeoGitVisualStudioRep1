@@ -11,7 +11,7 @@
 #include <tchar.h>
 #include "mosek.h"
 #include <Eigen/Dense>
-
-
+#include <cstdlib>
+#include <iostream>
 
 // TODO: reference additional headers your program requires here

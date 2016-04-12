@@ -21,7 +21,7 @@ static void MSKAPI printstr(void *handle, MSKCONST char str[])
 	printf("%s", str);
 } /* printstr */
 
-int main(int argc, char *argv[])
+int main2(int argc, char *argv[])
 {
 	using namespace Eigen;
 	using namespace std;
