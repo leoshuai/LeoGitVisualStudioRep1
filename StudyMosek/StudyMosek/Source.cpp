@@ -21,7 +21,7 @@ static void MSKAPI printstr(void *handle, MSKCONST char str[])
 	printf("%s", str);
 } /* printstr */
 
-int main2(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	using namespace Eigen;
 	using namespace std;
@@ -114,13 +114,18 @@ int main2(int argc, char *argv[])
 
 			/* Set the bounds on constraints.
 			for i=1, ...,NUMCON : blc[i] <= constraint i <= buc[i] */
-			for (i = 0; i<NUMCON && r == MSK_RES_OK; ++i)
+			//for (i = 0; i<NUMCON && r == MSK_RES_OK; ++i)
+			//	r = MSK_putconbound(task,
+			//		i,           /* Index of constraint.*/
+			//		bkc[i],      /* Bound key.*/
+			//		blc[i],      /* Numerical value of lower bound.*/
+			//		buc[i]);     /* Numerical value of upper bound.*/
+			if (r == MSK_RES_OK)
 				r = MSK_putconbound(task,
-					i,           /* Index of constraint.*/
-					bkc[i],      /* Bound key.*/
-					blc[i],      /* Numerical value of lower bound.*/
-					buc[i]);     /* Numerical value of upper bound.*/
-
+					0,           /* Index of constraint.*/
+					MSK_BK_UP,      /* Bound key.*/
+					-MSK_INFINITY,      /* Numerical value of lower bound.*/
+					s.dot(y) - fx);     /* Numerical value of upper bound.*/
 			if (r == MSK_RES_OK)
 			{
 				/*
@@ -206,6 +211,7 @@ int main2(int argc, char *argv[])
 		MSK_deletetask(&task);
 	}
 	MSK_deleteenv(&env);
-
+	int ff;
+	cin >> ff;
 	return (r);
 } /* main */

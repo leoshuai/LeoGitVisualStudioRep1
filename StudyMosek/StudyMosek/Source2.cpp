@@ -1,25 +1,44 @@
 #include "stdafx.h"
+#define NUMCON 1   /* Number of constraints.             */
+#define NUMVAR 3   /* Number of variables.               */
+#define NUMANZ 3   /* Number of non-zeros in A.           */
+#define NUMQNZ 2   /* Number of non-zeros in Q.           */
+
 static void MSKAPI printstr(void *handle, MSKCONST char str[])
 {
 	printf("%s", str);
 } /* printstr */
 
-int main1(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-	using namespace Eigen;
-	using namespace std;
-	const int n = 2;
-	VectorXd xk(n),s(n),y(n),One(n);
-	xk << 2, 3;
-	s = xk;
-	y = xk;
-	VectorXi rs(n);
-	rs.setLinSpaced(n, 0, n - 1);
-	One.setOnes(n);
+
+	double        c[] = { 1.0,-0.1,1.0 };
+
+	MSKboundkeye  bkc[] = { MSK_BK_UP };
+	double        buc[] = { -6.99 };
+	double        blc[] = { -MSK_INFINITY };
+
+	MSKboundkeye  bkx[] = { MSK_BK_FR,
+		MSK_BK_FR,
+		MSK_BK_FR };
+	double        blx[] = { -MSK_INFINITY,
+		-MSK_INFINITY,
+		-MSK_INFINITY };
+	double        bux[] = { +MSK_INFINITY,
+		+MSK_INFINITY,
+		+MSK_INFINITY };
+
+	MSKint32t     aptrb[] = { 0,   1,   2 },
+		aptre[] = { 1,   2,   3 },
+		asub[] = { 0,   0,   0 };
+	double        aval[] = { -2.0, -4.2, -1.0 };
+
+	MSKint32t     qsubi[NUMQNZ];
+	MSKint32t     qsubj[NUMQNZ];
+	double        qval[NUMQNZ];
 
 	MSKint32t     i, j;
-	MSKint32t ind_con=0;
-	double        xx[n+1];
+	double        xx[NUMVAR];
 
 	MSKenv_t      env = NULL;
 	MSKtask_t     task = NULL;
@@ -31,7 +50,7 @@ int main1(int argc, char *argv[])
 	if (r == MSK_RES_OK)
 	{
 		/* Create the optimization task. */
-		r = MSK_maketask(env, 1, n+1, &task);
+		r = MSK_maketask(env, NUMCON, NUMVAR, &task);
 
 		if (r == MSK_RES_OK)
 		{
@@ -40,52 +59,66 @@ int main1(int argc, char *argv[])
 			/* Append 'NUMCON' empty constraints.
 			The constraints will initially have no bounds. */
 			if (r == MSK_RES_OK)
-				r = MSK_appendcons(task, 1);
+				r = MSK_appendcons(task, NUMCON);
 
-			/* Append 'n+1' variables.
+			/* Append 'NUMVAR' variables.
 			The variables will initially be fixed at zero (x=0). */
 			if (r == MSK_RES_OK)
-				r = MSK_appendvars(task, n+1);
+				r = MSK_appendvars(task, NUMVAR);
 
 			/* Optionally add a constant term to the objective. */
 			if (r == MSK_RES_OK)
-				r = MSK_putcfix(task, 0.5*xk.squaredNorm());
-			/* Set the linear term c_j in the objective.*/
-			// Leo comments c = [-xk;1 ] 
-			for (j = 0; j < n && r == MSK_RES_OK; ++j)
+				r = MSK_putcfix(task, 0.5*1.01);
+			for (j = 0; j<NUMVAR && r == MSK_RES_OK; ++j)
 			{
+				/* Set the linear term c_j in the objective.*/
 				if (r == MSK_RES_OK)
-					r = MSK_putcj(task, j, -xk(j));
+					r = MSK_putcj(task, j, c[j]);
+
+				/* Set the bounds on variable j.
+				blx[j] <= x_j <= bux[j] */
+				if (r == MSK_RES_OK)
+					r = MSK_putvarbound(task,
+						j,           /* Index of variable.*/
+						bkx[j],      /* Bound key.*/
+						blx[j],      /* Numerical value of lower bound.*/
+						bux[j]);     /* Numerical value of upper bound.*/
+
+									 /* Input column j of A */
+				
+
 			}
-			/*if (r == MSK_RES_OK)
-				r = MSK_putcslice(task, 0, n - 1, ((-1.0)*xk).data());*///I was going to use putcslice and replace all elements at once
-			// but I found that this is not going to be easy.
-			if (r == MSK_RES_OK)
-				r = MSK_putcj(task, n, 1.0);
-//==================================================
-			/* Set the bounds on constraints.
-			for i=1, ...,numcon : blc[i] <= constraint i <= buc[i] */
-			if (r == MSK_RES_OK)
-			r = MSK_putconbound(task,
-				ind_con,           /* Index of constraint.*/
-				MSK_BK_UP,      /* Bound key.*/
-				MSK_INFINITY,      /* Numerical value of lower bound.*/
-				s.dot(y));     /* Numerical value of upper bound.*/
 
 			if (r == MSK_RES_OK)
 				r = MSK_putarow(task,
-					ind_con,                 /* Row index.*/
-					n,//aptre[i] - aptrb[i], /* Number of non-zeros in row i.*/
-					rs.data(),//asub + aptrb[i],     /* Pointer to column indexes of row i.*/
-					s.data());    /* Pointer to values of row i.*/
+					0,                 
+					3, 
+					aptrb,     
+					aval);    
+			/* Set the bounds on constraints.
+			for i=1, ...,NUMCON : blc[i] <= constraint i <= buc[i] */
+			for (i = 0; i<NUMCON && r == MSK_RES_OK; ++i)
+				r = MSK_putconbound(task,
+					i,           /* Index of constraint.*/
+					bkc[i],      /* Bound key.*/
+					blc[i],      /* Numerical value of lower bound.*/
+					buc[i]);     /* Numerical value of upper bound.*/
 
-
-		
 			if (r == MSK_RES_OK)
 			{
+				/*
+				* The lower triangular part of the Q
+				* matrix in the objective is specified.
+				*/
+
+				qsubi[0] = 0;   qsubj[0] = 0;  qval[0] = 1.0;
+				qsubi[1] = 1;   qsubj[1] = 1;  qval[1] = 1.0;
+				/*qsubi[2] = 2;   qsubj[2] = 0;  qval[2] = -1.0;
+				qsubi[3] = 2;   qsubj[3] = 2;  qval[3] = 2.0;*/
+
 				/* Input the Q for the objective. */
 
-				r = MSK_putqobj(task, n, rs.data(), rs.data(), One.data());
+				r = MSK_putqobj(task, NUMQNZ, qsubi, qsubj, qval);
 			}
 
 			if (r == MSK_RES_OK)
@@ -115,7 +148,7 @@ int main1(int argc, char *argv[])
 							xx);
 
 						printf("Optimal primal solution\n");
-						for (j = 0; j<n+1; ++j)
+						for (j = 0; j<NUMVAR; ++j)
 							printf("x[%d]: %e\n", j, xx[j]);
 
 						break;
@@ -156,7 +189,6 @@ int main1(int argc, char *argv[])
 		MSK_deletetask(&task);
 	}
 	MSK_deleteenv(&env);
-	int cc;
-	std::cin >> cc;
+
 	return (r);
 } /* main */
