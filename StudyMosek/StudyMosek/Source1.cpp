@@ -4,19 +4,27 @@ static void MSKAPI printstr(void *handle, MSKCONST char str[])
 	printf("%s", str);
 } /* printstr */
 
-int main1(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	using namespace Eigen;
 	using namespace std;
 	const int n = 2;
 	VectorXd xk(n),s(n),y(n),One(n);
-	xk << 2, 3;
-	s = xk;
+	xk << 1.0, -0.1;
+	s << -2, -4.2;
 	y = xk;
 	VectorXi rs(n);
 	rs.setLinSpaced(n, 0, n - 1);
 	One.setOnes(n);
-
+	MSKboundkeye  bkx[] = { MSK_BK_FR,
+		MSK_BK_FR,
+		MSK_BK_FR };
+	double        blx[] = { -MSK_INFINITY,
+		-MSK_INFINITY,
+		-MSK_INFINITY };
+	double        bux[] = { +MSK_INFINITY,
+		+MSK_INFINITY,
+		+MSK_INFINITY };
 	MSKint32t     i, j;
 	MSKint32t ind_con=0;
 	double        xx[n+1];
@@ -62,6 +70,19 @@ int main1(int argc, char *argv[])
 			// but I found that this is not going to be easy.
 			if (r == MSK_RES_OK)
 				r = MSK_putcj(task, n, 1.0);
+
+			for (j = 0; j < n+1 && r == MSK_RES_OK; ++j)
+			{
+				/* Set the bounds on variable j.
+				blx[j] <= x_j <= bux[j] */
+				if (r == MSK_RES_OK)
+					r = MSK_putvarbound(task,
+						j,           /* Index of variable.*/
+						bkx[j],      /* Bound key.*/
+						blx[j],      /* Numerical value of lower bound.*/
+						bux[j]);     /* Numerical value of upper bound.*/
+			}
+
 //==================================================
 			/* Set the bounds on constraints.
 			for i=1, ...,numcon : blc[i] <= constraint i <= buc[i] */
@@ -69,8 +90,8 @@ int main1(int argc, char *argv[])
 			r = MSK_putconbound(task,
 				ind_con,           /* Index of constraint.*/
 				MSK_BK_UP,      /* Bound key.*/
-				MSK_INFINITY,      /* Numerical value of lower bound.*/
-				s.dot(y));     /* Numerical value of upper bound.*/
+				-MSK_INFINITY,      /* Numerical value of lower bound.*/
+				-6.99);     /* Numerical value of upper bound.*/
 
 			if (r == MSK_RES_OK)
 				r = MSK_putarow(task,
@@ -79,7 +100,11 @@ int main1(int argc, char *argv[])
 					rs.data(),//asub + aptrb[i],     /* Pointer to column indexes of row i.*/
 					s.data());    /* Pointer to values of row i.*/
 
-
+			if (r == MSK_RES_OK)
+				r = MSK_putaij(task,
+					ind_con,                 /* Row index.*/
+					n,//aptre[i] - aptrb[i], /* Number of non-zeros in row i.*/
+					-1.0);    /* Pointer to values of row i.*/
 		
 			if (r == MSK_RES_OK)
 			{

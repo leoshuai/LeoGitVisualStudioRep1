@@ -12,7 +12,7 @@ static void MSKAPI printstr(void *handle, MSKCONST char str[])
 int main(int argc, char *argv[])
 {
 
-	double        c[] = { 1.0,-0.1,1.0 };
+	double        c[] = { -1.0,0.1,1.0 };
 
 	MSKboundkeye  bkc[] = { MSK_BK_UP };
 	double        buc[] = { -6.99 };
